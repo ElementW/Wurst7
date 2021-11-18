@@ -8,27 +8,37 @@
 package net.wurstclient.hacks;
 
 import net.minecraft.client.network.ClientPlayerEntity;
+import net.minecraft.network.packet.c2s.play.PlayerMoveC2SPacket;
 import net.minecraft.util.math.Vec3d;
 import net.wurstclient.Category;
 import net.wurstclient.SearchTags;
 import net.wurstclient.events.IsPlayerInWaterListener;
+import net.wurstclient.events.PacketOutputListener;
 import net.wurstclient.events.UpdateListener;
 import net.wurstclient.hack.Hack;
+import net.wurstclient.mixin.PlayerMoveC2SPacketAccessor;
+import net.wurstclient.settings.CheckboxSetting;
 import net.wurstclient.settings.SliderSetting;
 import net.wurstclient.settings.SliderSetting.ValueDisplay;
 
 @SearchTags({"FlyHack", "fly hack", "flying"})
 public final class FlightHack extends Hack
-	implements UpdateListener, IsPlayerInWaterListener
+	implements UpdateListener, IsPlayerInWaterListener, PacketOutputListener
 {
 	public final SliderSetting speed =
 		new SliderSetting("Speed", 1, 0.05, 5, 0.05, ValueDisplay.DECIMAL);
+	public final CheckboxSetting fakeGround = new CheckboxSetting(
+		"Fake being on ground",
+		"Tell the server you are standing on\n" +
+		"ground when you are in fact flying.",
+		false);
 	
 	public FlightHack()
 	{
 		super("Flight");
 		setCategory(Category.MOVEMENT);
 		addSetting(speed);
+		addSetting(fakeGround);
 	}
 	
 	@Override
@@ -39,6 +49,7 @@ public final class FlightHack extends Hack
 		
 		EVENTS.add(UpdateListener.class, this);
 		EVENTS.add(IsPlayerInWaterListener.class, this);
+		EVENTS.add(PacketOutputListener.class, this);
 	}
 	
 	@Override
@@ -46,6 +57,7 @@ public final class FlightHack extends Hack
 	{
 		EVENTS.remove(UpdateListener.class, this);
 		EVENTS.remove(IsPlayerInWaterListener.class, this);
+		EVENTS.remove(PacketOutputListener.class, this);
 	}
 	
 	@Override
@@ -70,5 +82,13 @@ public final class FlightHack extends Hack
 	public void onIsPlayerInWater(IsPlayerInWaterEvent event)
 	{
 		event.setInWater(false);
+	}
+
+	@Override
+	public void onSentPacket(PacketOutputEvent event)
+	{
+		if(fakeGround.isChecked() &&
+			event.getPacket() instanceof PlayerMoveC2SPacket)
+			((PlayerMoveC2SPacketAccessor) event.getPacket()).setOnGround(true);
 	}
 }

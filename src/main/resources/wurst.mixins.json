@@ -44,6 +44,7 @@
     "MouseMixin",
     "MultiplayerScreenMixin",
     "PlayerInventoryMixin",
+    "PlayerMoveC2SPacketAccessor",
     "PlayerSkinProviderMixin",
     "PowderSnowBlockMixin",
     "RenderTickCounterMixin",
